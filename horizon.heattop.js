@@ -31,8 +31,9 @@ function update(){
     .attr("node_name", function(d) { return d.name; })
     .attr("node_id", function(d) { return d.instance; })
     .call(force.drag);
-
-  nodeEnter.append("image")
+    
+    
+    nodeEnter.append("image")
     .attr("xlink:href", function(d) { return d.image; })
     .attr("id", function(d){ return "image_"+ d.name; })
     .attr("x", function(d) { return d.image_x; })
@@ -50,20 +51,36 @@ function update(){
     $("#info_box").html(d.info_box);
     current_info = d.name;
   });
-  node.on("click", function(d) {
+  node.on("dblclick", function(d) {
     $("#info_box").html(d.info_box);
     current_info = d.name;
     str = d.name;
     
     if(current_info.indexOf("instance") != -1)
-    	window.location = '/project/stacksd/form/' + str + '/';
+    	window.location = '/project/stacksd/formI/' + str + '/';
+    if(current_info.indexOf("database") != -1)
+    	window.location = '/project/stacksd/formD/' + str + '/';
+    if(current_info.indexOf("loadbalancer") != -1)
+      window.location = '/project/stacksd/formLB/' + str + '/';
   });
   node.on("mouseout", function(d) {
     $("#info_box").html('');
   });
+
+  var node_to_delete=''
+  //******************Delete node action or url can be fired here!!*************
+  node.on("click",function(d){
+    $("#info_box1").html('<a class="btn btn-danger btn-large pull-right">Delete</a>');
+    node_to_delete=''
+    node_to_delete=d.name
+  });
+  $("#info_box1").on("click",function(d){
+    $("#info_box1").html('');
+    window.location=  '/project/stacksd/del/'+node_to_delete
+  });
+  //****************************************************************************
   force.start();
 }
-
 function tick() {
   link.attr("x1", function(d) { return d.source.x; })
     .attr("y1", function(d) { return d.source.y; })
@@ -306,8 +323,13 @@ function foo(id)
    
    else if(id===3)
    	 ajaxx_url = '/project/stacksd/create/3/';
-   	 	  
    
+   else if(id===4)
+     ajaxx_url = '/project/stacksd/create/4/';
+   	 	  
+   else if(id===5)
+   	ajaxx_url = '/project/stacksd/create/5/';
+   	
    $.getJSON(ajaxx_url, function(json) {
       //update d3 data element
       $("#d3_data").attr("data-d3_data", JSON.stringify(json));

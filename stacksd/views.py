@@ -16,7 +16,7 @@ from operator import attrgetter
 
 from django.core.urlresolvers import reverse
 from django.core.urlresolvers import reverse_lazy
-from django.http import HttpResponse  # noqa
+from django.http import HttpResponse,HttpResponseRedirect  # noqa
 from django.utils.translation import ugettext_lazy as _
 import django.views.generic
 
@@ -32,6 +32,8 @@ from openstack_dashboard.dashboards.project.stacksd \
     import forms as project_forms    
 from openstack_dashboard.dashboards.project.stacksd \
     import tabs as project_tabs
+import tkMessageBox
+
 
 LOG = logging.getLogger(__name__)
 
@@ -62,7 +64,7 @@ class JSONView(django.views.generic.View):
                             content_type="application/json")
 
 class ResourcesView(django.views.generic.View):
-    def get(self, request, id):
+    def get(self, request, id , str = ''):
         stack_id = "e75ea590-dcc0-4989-8550-87d206b21979"
         stack_id1 = "e75ea590-dcc0-4989-8550-87d206b21970"
         
@@ -84,16 +86,77 @@ class ResourcesView(django.views.generic.View):
             return HttpResponse(project_api.d3_dataa(stack_id=stack_id),
                             content_type="application/json")    
         
-        else:
-            pass    
+        elif id == '4':
+            pass
 
-class FormView(forms.ModalFormView):
-    form_class = project_forms.SampleForm
-    template_name = 'project/stacksd/form.html'
+        elif id == '5':
+            project_api.create_template()
+            return HttpResponse(project_api.d3_dataa(stack_id=stack_id),
+                            content_type="application/json")       
+
+class RemoveNode(django.views.generic.View):
+    def get(self, request, str = 'sujay bothe' ):
+        #tkMessageBox.showinfo(title="Greetings", message="Hello World! From Remove node view: \n" + s)
+        project_api.del_node(str)
+        return HttpResponseRedirect("/project/stacksd/")        
+        
+class InstanceFormView(forms.ModalFormView):
+    form_class = project_forms.InstanceForm
+    template_name = 'project/stacksd/formI.html'
     success_url = reverse_lazy('horizon:project:stacksd:index')
     
     def get_context_data(self, **kwargs):
-        context = super(FormView, self).get_context_data(**kwargs)
+        context = super(InstanceFormView, self).get_context_data(**kwargs)
+        context['str'] = self.get_object()
+        #string=context['str'].strip('0123456789')
+        #if string == "database":
+            #form_class = project_forms.DatabaseForm
+        #tkMessageBox.showinfo(title="Greetings", message="Hello World! \n" + str(string))
+        return context    
+
+    @memoized.memoized_method
+    def get_object(self):
+        str = self.kwargs['str']
+        #project_api.record_names(str)
+        return str
+
+    def get_initial(self):
+        str = self.get_object()
+        dict = project_api.get_data(str)
+        return {'availability_zone': dict['availability_zone'],
+                'instance_name': dict['instance_name'],
+                'key_pair': dict['key_pair'],
+                'flavor': dict['flavor'],
+                }
+
+class DatabaseFormView(forms.ModalFormView):
+    form_class = project_forms.DatabaseForm
+    template_name = 'project/stacksd/formD.html'
+    success_url = reverse_lazy('horizon:project:stacksd:index')
+    
+    def get_context_data(self, **kwargs):
+        context = super(DatabaseFormView, self).get_context_data(**kwargs)
+        context['str'] = self.get_object()
+        #string=context['str'].strip('0123456789')
+        #if string == "database":
+            #form_class = project_forms.DatabaseForm
+        #tkMessageBox.showinfo(title="Greetings", message="Hello World! \n" + str(string))
+        return context
+
+    @memoized.memoized_method
+    def get_object(self):
+        str = self.kwargs['str']
+        project_api.record_names(str)
+        return str
+
+
+class LoadBalancerFormView(forms.ModalFormView):
+    form_class = project_forms.LoadBalancerForm
+    template_name = 'project/stacksd/formLB.html'
+    success_url = reverse_lazy('horizon:project:stacksd:index')
+    
+    def get_context_data(self, **kwargs):
+        context = super(LoadBalancerFormView, self).get_context_data(**kwargs)
         context['str'] = self.get_object()
         return context
 
@@ -102,4 +165,3 @@ class FormView(forms.ModalFormView):
         str = self.kwargs['str']
         project_api.record_names(str)
         return str
-    
